@@ -1,4 +1,4 @@
-# pp [![Go](https://github.com/admpub/pp/workflows/Go/badge.svg)](https://github.com/admpub/pp/actions) [![Go Reference](https://pkg.go.dev/badge/github.com/admpub/pp/v3.svg)](https://pkg.go.dev/github.com/admpub/pp/v3)
+# pp [![Go Reference](https://pkg.go.dev/badge/github.com/admpub/pp.svg)](https://pkg.go.dev/github.com/admpub/pp)
 
 Colored pretty printer for Go language
 
