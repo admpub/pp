@@ -1,4 +1,4 @@
-module github.com/k0kubun/pp/v3
+module github.com/admpub/pp
 
 go 1.14
 
