@@ -1,4 +1,4 @@
-# pp [![Go](https://github.com/k0kubun/pp/workflows/Go/badge.svg)](https://github.com/k0kubun/pp/actions) [![Go Reference](https://pkg.go.dev/badge/github.com/k0kubun/pp/v3.svg)](https://pkg.go.dev/github.com/k0kubun/pp/v3)
+# pp [![Go](https://github.com/admpub/pp/workflows/Go/badge.svg)](https://github.com/admpub/pp/actions) [![Go Reference](https://pkg.go.dev/badge/github.com/admpub/pp/v3.svg)](https://pkg.go.dev/github.com/admpub/pp/v3)
 
 Colored pretty printer for Go language
 
@@ -9,7 +9,7 @@ Colored pretty printer for Go language
 Just call `pp.Print()`.
 
 ```go
-import "github.com/k0kubun/pp"
+import "github.com/admpub/pp"
 
 m := map[string]string{"foo": "bar", "hello": "world"}
 pp.Print(m)
