@@ -1,6 +1,7 @@
 package pp
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -9,10 +10,6 @@ import (
 	"testing"
 	"time"
 	"unsafe"
-
-	// Use fork until following PR is merged
-	// https://github.com/mitchellh/colorstring/pull/3
-	"github.com/k0kubun/colorstring"
 )
 
 type testCase struct {
@@ -93,7 +90,7 @@ var (
 		{uint16(16), "[blue][bold]16"},
 		{uint32(32), "[blue][bold]32"},
 		{uint64(64), "[blue][bold]64"},
-		{uintptr(128), "[blue][bold]0x80"},
+		{uintptr(128), "[blue][bold]128"},
 		{float32(2.23), "[magenta][bold]2.230000"},
 		{float64(3.14), "[magenta][bold]3.140000"},
 		{complex64(complex(3, -4)), "[blue][bold](3-4i)"},
@@ -222,13 +219,35 @@ var (
 )
 
 func TestFormat(t *testing.T) {
-	for _, test := range testCases {
-		actual := fmt.Sprintf("%s", defaultPrettyPrinter.format(test.object))
+	processTestCases(t, defaultPrettyPrinter, testCases)
+}
+
+func TestThousands(t *testing.T) {
+	thousandsTestCases := []testCase{
+		{int(4), "[blue][bold]4"},
+		{int(4000), "[blue][bold]4,000"},
+		{uint(1000), "[blue][bold]1,000"},
+		{uint16(16000), "[blue][bold]16,000"},
+		{uint32(32000), "[blue][bold]32,000"},
+		{uint64(64000), "[blue][bold]64,000"},
+		{float64(3000.14), "[magenta][bold]3,000.140000"},
+	}
+
+	thousandsPrinter := newPrettyPrinter(3)
+	thousandsPrinter.SetThousandsSeparator(true)
+	thousandsPrinter.SetDecimalUint(true)
+
+	processTestCases(t, thousandsPrinter, thousandsTestCases)
+}
+
+func processTestCases(t *testing.T, printer *PrettyPrinter, cases []testCase) {
+	for _, test := range cases {
+		actual := fmt.Sprintf("%s", printer.format(test.object))
 
 		trimmed := strings.Replace(test.expect, "\t", "", -1)
 		trimmed = strings.TrimPrefix(trimmed, "\n")
 		trimmed = strings.TrimSuffix(trimmed, "\n")
-		expect := colorstring.Color(trimmed)
+		expect := colorString(trimmed)
 		if expect != actual {
 			v := reflect.ValueOf(test.object)
 			t.Errorf("\nTestCase: %#v\nType: %s\nExpect: %# v\nActual: %# v\n", test.object, v.Kind(), expect, actual)
@@ -238,7 +257,7 @@ func TestFormat(t *testing.T) {
 	}
 
 	for _, object := range checkCases {
-		actual := fmt.Sprintf("%s", defaultPrettyPrinter.format(object))
+		actual := fmt.Sprintf("%s", printer.format(object))
 		logResult(t, object, actual)
 	}
 }
@@ -254,3 +273,44 @@ func logResult(t *testing.T, object interface{}, actual string) {
 func isMultiLine(text string) bool {
 	return strings.Contains(text, "\n")
 }
+
+func colorString(text string) string {
+	buf := new(bytes.Buffer)
+	colored := false
+
+	lastMatch := []int{0, 0}
+	for _, match := range colorRe.FindAllStringIndex(text, -1) {
+		buf.WriteString(text[lastMatch[1]:match[0]])
+		lastMatch = match
+
+		var colorText string
+		color := text[lastMatch[0]+1 : lastMatch[1]-1]
+		if code, ok := colors[color]; ok {
+			colored = (color != "reset")
+			colorText = fmt.Sprintf("\033[%sm", code)
+		} else {
+			colorText = text[lastMatch[0]:lastMatch[1]]
+		}
+		buf.WriteString(colorText)
+	}
+	buf.WriteString(text[lastMatch[1]:])
+
+	if colored {
+		buf.WriteString("\033[0m")
+	}
+	return buf.String()
+}
+
+var (
+	colorRe = regexp.MustCompile(`(?i)\[[a-z0-9_-]+\]`)
+	colors  = map[string]string{
+		"red":     "31",
+		"green":   "32",
+		"yellow":  "33",
+		"blue":    "34",
+		"magenta": "35",
+		"cyan":    "36",
+		"bold":    "1",
+		"reset":   "0",
+	}
+)
